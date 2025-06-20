@@ -2,6 +2,7 @@ import './globals.css';
 import type { ReactNode } from 'react';
 import SidebarNav from '@/components/sidebar-nav';
 import Providers from '@/components/providers';
+import PageTransition from '@/components/page-transition';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -10,7 +11,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Providers>
           <div className="flex min-h-screen">
             <SidebarNav />
-            <main className="flex-1 p-4">{children}</main>
+            <PageTransition>{children}</PageTransition>
           </div>
         </Providers>
       </body>
