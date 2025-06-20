@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import useCarbonChart from '@/hooks/use-carbon-chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const metrics = [
@@ -62,13 +63,21 @@ export default function ComparePage() {
           <CardHeader>
             <CardTitle>{current.leftLabel}</CardTitle>
           </CardHeader>
-          <CardContent>{leftChart}</CardContent>
+          <CardContent>
+            <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+              {leftChart}
+            </Suspense>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle>{current.rightLabel}</CardTitle>
           </CardHeader>
-          <CardContent>{rightChart}</CardContent>
+          <CardContent>
+            <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+              {rightChart}
+            </Suspense>
+          </CardContent>
         </Card>
       </div>
       <table className="w-full table-auto text-sm">

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ReactECharts from 'echarts-for-react';
+const ReactECharts = React.lazy(() => import('echarts-for-react'));
 
 export type CarbonChartType = 'bar' | 'radar' | 'gauge';
 
