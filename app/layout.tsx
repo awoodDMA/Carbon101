@@ -1,6 +1,6 @@
 import './globals.css';
 import type { ReactNode } from 'react';
-import SidebarNav from '@/components/sidebar-nav';
+import Sidebar from '@/components/Sidebar';
 import Providers from '@/components/providers';
 import PageTransition from '@/components/page-transition';
 
@@ -10,7 +10,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="font-sans antialiased">
         <Providers>
           <div className="flex min-h-screen">
-            <SidebarNav />
+            <Sidebar />
             <PageTransition>{children}</PageTransition>
           </div>
         </Providers>
