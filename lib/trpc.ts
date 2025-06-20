@@ -1,12 +1,15 @@
 import { createTRPCReact } from '@trpc/react-query';
-import { httpBatchLink } from '@trpc/client';
+import { experimental_localLink } from '@trpc/client';
+import type { AppRouter } from './mock-router';
+import { appRouter } from './mock-router';
 
-export const trpc = createTRPCReact();
+export const trpc = createTRPCReact<AppRouter>();
 
 export const trpcClient = trpc.createClient({
   links: [
-    httpBatchLink({
-      url: `${process.env.NEXT_PUBLIC_API_URL ?? ''}/trpc`,
+    experimental_localLink({
+      router: appRouter,
+      createContext: () => ({}),
     }),
   ],
 });
