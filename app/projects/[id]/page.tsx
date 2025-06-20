@@ -1,8 +1,14 @@
 'use client';
 
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
-import { Viewer } from '@speckle/viewer-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const Viewer = dynamic(() => import('@speckle/viewer-react').then(m => m.Viewer), {
+  ssr: false,
+  suspense: true,
+});
 import OptionDrawer from '@/components/option-drawer';
 
 interface ProjectPageProps {
@@ -19,7 +25,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       <h1 className="text-xl font-semibold">Hello Project</h1>
       <OptionDrawer />
       {streamId && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<Skeleton className="h-[80vh] w-full" />}>
           <Viewer
             key={optionId}
             streamId={streamId}
