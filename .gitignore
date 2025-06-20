@@ -7,4 +7,3 @@ npm-debug.log*
 !.env.example
 coverage/
 tsconfig.tsbuildinfo
-package-lock.json
