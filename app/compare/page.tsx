@@ -1,19 +1,14 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import useCarbonChart from '@/hooks/use-carbon-chart'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import { useState } from 'react';
+import useCarbonChart from '@/hooks/use-carbon-chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const metrics = [
   { name: 'A1-A3', max: 100 },
   { name: 'A4', max: 100 },
-  { name: 'A5', max: 100 }
-]
+  { name: 'A5', max: 100 },
+];
 
 const datasets = [
   {
@@ -22,7 +17,7 @@ const datasets = [
     leftLabel: 'Option A',
     rightLabel: 'Option B',
     left: { indicators: metrics, values: [40, 20, 10] },
-    right: { indicators: metrics, values: [35, 25, 15] }
+    right: { indicators: metrics, values: [35, 25, 15] },
   },
   {
     id: 'set2',
@@ -30,21 +25,21 @@ const datasets = [
     leftLabel: 'Option C',
     rightLabel: 'Option D',
     left: { indicators: metrics, values: [50, 30, 20] },
-    right: { indicators: metrics, values: [45, 35, 25] }
-  }
-]
+    right: { indicators: metrics, values: [45, 35, 25] },
+  },
+];
 
 export default function ComparePage() {
-  const [current, setCurrent] = useState(datasets[0])
-  const leftChart = useCarbonChart('radar', current.left)
-  const rightChart = useCarbonChart('radar', current.right)
+  const [current, setCurrent] = useState(datasets[0]);
+  const leftChart = useCarbonChart('radar', current.left);
+  const rightChart = useCarbonChart('radar', current.right);
 
   const rows = current.left.indicators.map((m, i) => {
-    const a = current.left.values[i]
-    const b = current.right.values[i]
-    const diff = ((b - a) / a) * 100
-    return { name: m.name, a, b, diff }
-  })
+    const a = current.left.values[i];
+    const b = current.right.values[i];
+    const diff = ((b - a) / a) * 100;
+    return { name: m.name, a, b, diff };
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,5 +103,5 @@ export default function ComparePage() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }
