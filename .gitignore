@@ -4,6 +4,7 @@ node_modules/
 npm-debug.log*
 .env.local
 .env.*
+!.env.example
 coverage/
 tsconfig.tsbuildinfo
 package-lock.json
