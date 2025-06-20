@@ -36,14 +36,16 @@ export default function DraggableTabs({ tabs, setTabs }: DraggableTabsProps) {
               'flex cursor-grab items-center gap-1 rounded-md border px-3 py-1 text-sm',
               active === tab.id && 'bg-accent text-accent-foreground'
             )}
-            onPointerDown={e => e.stopPropagation()}
+            onPointerDown={(e: React.PointerEvent<HTMLDivElement>) =>
+              e.stopPropagation()
+            }
             onClick={() => setActive(tab.id)}
           >
             {tab.title}
             <button
               aria-label="Remove tab"
               className="ml-1"
-              onClick={e => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.stopPropagation()
                 removeTab(tab.id)
               }}
