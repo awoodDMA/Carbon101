@@ -1,42 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import DraggableTabs, { TabItem } from '@/components/DraggableTabs'
-import StackedBarChart, { Series } from '@/components/StackedBarChart'
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Skeleton } from '@/components/ui/skeleton'
+import useCarbonChart from '@/hooks/use-carbon-chart'
+import { useCarbonResults } from '@/hooks/use-api'
 
-const categories = ['A1-A3', 'A4', 'A5']
-
-function makeSeries(): Series[] {
-  return [
-    { name: 'Concrete', values: categories.map(() => Math.floor(Math.random() * 40 + 10)) },
-    { name: 'Steel', values: categories.map(() => Math.floor(Math.random() * 20 + 5)) },
-  ]
+function ResultGauge({ optionId }: { optionId: string }) {
+  const results = useCarbonResults(optionId)
+  const value = results[0]?.value ?? 0
+  const chart = useCarbonChart('gauge', { value })
+  return chart
 }
 
 export default function ComparePage() {
-  const [tabs, setTabs] = useState<TabItem[]>([
-    { id: 'tab-1', title: 'Option 1', content: <StackedBarChart categories={categories} series={makeSeries()} /> },
-  ])
+  const params = useSearchParams()
+  const optionId = params.get('optionId')
 
-  const addTab = () => {
-    const next: TabItem = {
-      id: `tab-${Date.now()}`,
-      title: `Option ${tabs.length + 1}`,
-      content: <StackedBarChart categories={categories} series={makeSeries()} />,
-    }
-    setTabs([...tabs, next])
-  }
+  if (!optionId) return <p>No option selected</p>
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex items-center justify-between gap-2">
-        <select className="rounded border p-2">
-          <option>All options</option>
-        </select>
-        <Button onClick={addTab}>Add tab</Button>
-      </header>
-      <DraggableTabs tabs={tabs} setTabs={setTabs} />
-    </div>
+    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-xl font-semibold">Compare</h1>
+        <ResultGauge optionId={optionId} />
+      </div>
+    </Suspense>
   )
 }
