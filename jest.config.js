@@ -8,6 +8,7 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
+  testPathIgnorePatterns: ['<rootDir>/__tests__/e2e'],
 }
 
 module.exports = createJestConfig(customJestConfig)
