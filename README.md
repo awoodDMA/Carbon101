@@ -1,4 +1,4 @@
-# 🚀  *Project Name* (working title)
+# 🚀  Carbon101 (working title)
 
 *An open‑source, self‑hosted platform for visualising Revit models, automating quantity take‑offs and calculating embodied carbon – powered by **Speckle** and a modern React front‑end.*
 
