@@ -5,7 +5,7 @@ import Providers from '@/components/providers';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
         <Providers>
           <div className="flex min-h-screen">
