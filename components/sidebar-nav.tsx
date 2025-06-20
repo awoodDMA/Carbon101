@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, FolderKanban, GitCompare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ThemeToggle from '@/components/theme-toggle'
 
 const links = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -35,6 +36,7 @@ export default function SidebarNav() {
           </li>
         ))}
       </ul>
+      <ThemeToggle />
     </nav>
   )
 }
