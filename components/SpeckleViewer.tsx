@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+// Dynamic import can't infer ViewerProps type correctly, so use any
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
-const Viewer = dynamic(() => import('@speckle/viewer-react').then(m => m.Viewer), {
-  ssr: false
-})
+const Viewer = dynamic(
+  () => import('@speckle/viewer-react').then((m) => m.Viewer),
+  { ssr: false },
+) as React.ComponentType<any>
 
 export interface SpeckleViewerProps {
   streamId: string

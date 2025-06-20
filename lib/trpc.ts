@@ -16,7 +16,7 @@ export const trpcClient = trpc.createClient({
           ? httpBatchLink({ url: `${apiUrl}/api/trpc` })
           : experimental_localLink({
               router: appRouter,
-              createContext: () => ({}),
+              createContext: async () => ({}),
             }),
       ],
 });
