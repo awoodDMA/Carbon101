@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import Page from '../app/page';
 
-test('renders heading', () => {
+test('renders project cards', () => {
   render(<Page />);
-  expect(screen.getByRole('heading', { name: /carbon101/i })).toBeInTheDocument();
+  expect(screen.getAllByRole('link', { name: /enter/i }).length).toBeGreaterThan(0);
 });
