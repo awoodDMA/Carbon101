@@ -26,8 +26,8 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r transition-all",
-        open ? "w-[240px]" : "w-[72px]"
+        "flex flex-col border-r bg-charcoal text-white transition-all duration-300",
+        open ? "w-60" : "w-16"
       )}
     >
       <div className="flex items-center justify-between p-4">
@@ -68,7 +68,7 @@ export default function Sidebar() {
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-emerald/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               !open && "justify-center"
             )}
           >
