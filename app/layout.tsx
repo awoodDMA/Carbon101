@@ -26,9 +26,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <body className="font-sans antialiased">
         <Providers>
-          <div className="flex min-h-screen">
+          <div className="grid min-h-screen grid-cols-[auto,1fr]">
             <Sidebar />
-            <PageTransition>{children}</PageTransition>
+            <div className="bg-background">
+              <PageTransition>{children}</PageTransition>
+            </div>
           </div>
         </Providers>
       </body>
