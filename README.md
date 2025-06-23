@@ -102,7 +102,6 @@ Constraints: ≤ 120 LOC per file; follow Prettier; use British English in c
 | `npm run lint`      | ESLint + Prettier check                |
 | `npm test`          | Unit tests via Jest                    |
 | `npm run build`     | Production build (`.next/`)            |
-| `npm run export`    | Static export (for GitHub Pages)       |
 | `npm run storybook` | Visual test components (optional)      |
 
 ---
@@ -118,8 +117,8 @@ Constraints: ≤ 120 LOC per file; follow Prettier; use British English in c
 ### GitHub Pages
 
 ```yaml
-# .github/workflows/deploy-pages.yml (excerpt)
-- run: npm run export
+# .github/workflows/deploy.yml (excerpt)
+- run: npm run build
 - run: npx gh-pages -d out
 ```
 
