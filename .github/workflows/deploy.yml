@@ -25,7 +25,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3.0.1
         with:
           path: ./out
           name: github-pages
@@ -38,6 +38,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5
         with:
           artifact-name: github-pages
