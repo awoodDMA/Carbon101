@@ -26,7 +26,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-charcoal text-white transition-all duration-300",
+        "relative flex flex-col border-r bg-charcoal text-white transition-all duration-300",
         open ? "w-60" : "w-16"
       )}
     >
@@ -80,6 +80,12 @@ export default function Sidebar() {
       <div className="mt-auto p-4">
         <Settings aria-hidden="true" className="size-5" />
       </div>
+      {!open && (
+        <div
+          className="absolute left-0 top-0 z-50 h-full w-2"
+          onMouseEnter={() => setOpen(true)}
+        />
+      )}
     </aside>
   );
 }
