@@ -1,4 +1,4 @@
-import './globals.css';
+import '../styles/globals.css';
 import type { ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Providers from '@/components/providers';
