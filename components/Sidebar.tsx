@@ -20,14 +20,14 @@ const links = [
 ];
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(() => {
+  const [open, setOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebarOpen');
       return saved !== null ? JSON.parse(saved) : true;
     }
     return true;
   });
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     localStorage.setItem('sidebarOpen', JSON.stringify(open));
@@ -44,7 +44,7 @@ export default function Sidebar() {
         <div className="relative">
           <button
             aria-label="User menu"
-            onClick={() => setMenuOpen((p) => !p)}
+            onClick={() => setMenuOpen((p: boolean) => !p)}
             className="rounded-full p-2 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <User aria-hidden="true" className="size-6" />
@@ -66,7 +66,7 @@ export default function Sidebar() {
         </div>
         <button
           aria-label="Toggle sidebar"
-          onClick={() => setOpen((p) => !p)}
+          onClick={() => setOpen((p: boolean) => !p)}
           className="rounded p-1 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {open ? (
