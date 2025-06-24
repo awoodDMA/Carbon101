@@ -44,7 +44,7 @@ export default function Sidebar() {
         <div className="relative">
           <button
             aria-label="User menu"
-            onClick={() => setMenuOpen((p) => !p)}
+            onClick={() => setMenuOpen((p: boolean) => !p)}
             className="rounded-full p-2 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <User aria-hidden="true" className="size-6" />
@@ -66,7 +66,7 @@ export default function Sidebar() {
         </div>
         <button
           aria-label="Toggle sidebar"
-          onClick={() => setOpen((p) => !p)}
+          onClick={() => setOpen((p: boolean) => !p)}
           className="rounded p-1 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {open ? (
