@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
@@ -22,6 +22,17 @@ const links = [
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebarOpen");
+    if (saved !== null) {
+      setOpen(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("sidebarOpen", JSON.stringify(open));
+  }, [open]);
 
   return (
     <aside
