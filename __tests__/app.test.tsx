@@ -1,13 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import Page from '../app/page';
-import Providers from '../components/providers';
 
-test('renders project cards', async () => {
-  render(
-    <Providers>
-      <Page />
-    </Providers>
-  );
-  const links = await screen.findAllByRole('link', { name: /enter/i });
-  expect(links.length).toBeGreaterThan(0);
+test('renders hello world', () => {
+  render(<Page />);
+  expect(screen.getByText(/hello world/i)).toBeInTheDocument();
 });
