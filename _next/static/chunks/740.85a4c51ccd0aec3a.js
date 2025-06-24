@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[740],{6740:function(e,t,a){a.r(t),a.d(t,{Viewer:function(){return r}});var n=a(7437);a(2265);let r=e=>{let{streamId:t,modelId:a,token:r,...d}=e;return(0,n.jsx)("div",{"data-stream-id":t,"data-model-id":a,"data-token":r,...d})}}}]);
