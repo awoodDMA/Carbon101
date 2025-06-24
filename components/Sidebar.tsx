@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   User,
   Settings,
@@ -10,35 +10,34 @@ import {
   BarChart,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const links = [
-  { href: "#", label: "Dashboard", icon: LayoutDashboard },
-  { href: "#", label: "Projects", icon: FolderKanban },
-  { href: "#", label: "Reports", icon: BarChart },
+  { href: '#', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '#', label: 'Projects', icon: FolderKanban },
+  { href: '#', label: 'Reports', icon: BarChart },
 ];
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarOpen');
+      return saved !== null ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("sidebarOpen");
-    if (saved !== null) {
-      setOpen(JSON.parse(saved));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("sidebarOpen", JSON.stringify(open));
+    localStorage.setItem('sidebarOpen', JSON.stringify(open));
   }, [open]);
 
   return (
     <aside
       className={cn(
-        "relative flex flex-col border-r bg-charcoal text-white transition-all duration-300",
-        open ? "w-60" : "w-16"
+        'relative flex flex-col border-r bg-charcoal text-white transition-all duration-300',
+        open ? 'w-60' : 'w-16',
       )}
     >
       <div className="flex items-center justify-between p-4">
@@ -53,10 +52,14 @@ export default function Sidebar() {
           {menuOpen && (
             <ul className="absolute left-0 mt-2 w-32 rounded-md border bg-background text-sm shadow">
               <li>
-                <button className="block w-full px-2 py-1 text-left hover:bg-accent">Profile</button>
+                <button className="block w-full px-2 py-1 text-left hover:bg-accent">
+                  Profile
+                </button>
               </li>
               <li>
-                <button className="block w-full px-2 py-1 text-left hover:bg-accent">Logout</button>
+                <button className="block w-full px-2 py-1 text-left hover:bg-accent">
+                  Logout
+                </button>
               </li>
             </ul>
           )}
@@ -73,14 +76,19 @@ export default function Sidebar() {
           )}
         </button>
       </div>
-      <nav className={cn("flex-1 space-y-1 px-2", !open && "flex flex-col items-center")}>
+      <nav
+        className={cn(
+          'flex-1 space-y-1 px-2',
+          !open && 'flex flex-col items-center',
+        )}
+      >
         {links.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-emerald/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              !open && "justify-center"
+              'flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-emerald/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              !open && 'justify-center',
             )}
           >
             <Icon aria-hidden="true" className="size-5" />
