@@ -1,0 +1,2 @@
+declare module 'forge-viewer';
+
