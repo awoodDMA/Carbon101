@@ -1,7 +1,7 @@
 'use client'
 
 import DoughnutChart from '@/components/DoughnutChart'
-import SpeckleViewer from '@/components/SpeckleViewer'
+import AutodeskViewer from '@/components/autodesk-viewer'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -37,7 +37,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         </Suspense>
       </section>
       <section className="col-span-5">
-        <SpeckleViewer streamId="mock-stream" modelId="mock-model" />
+        <AutodeskViewer modelUrn="mock-urn" token="mock-token" />
       </section>
     </main>
   )
