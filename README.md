@@ -59,13 +59,36 @@ $ cp .env.example .env.local   # edit env vars as needed
 $ npm run dev                  # http://localhost:3000
 ```
 
-> **Prerequisites:** Node ≥ 20, npm ≥ 10.  For model viewing you’ll also need access to a running Speckle Server and bearer token.
+> **Prerequisites:** Node ≥ 20, npm ≥ 10.  For Autodesk model viewing you’ll also need a Forge access token.
 
 ### Environment Variables
 
 - `NEXT_PUBLIC_API_URL` – URL of the Carbon101 back end.
 - `NEXT_PUBLIC_AUTODESK_CLIENT_ID` – Autodesk Forge client ID.
 - `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET` – Autodesk Forge client secret.
+
+To fetch a viewer token, run:
+
+```bash
+curl -X POST \
+  https://developer.api.autodesk.com/authentication/v1/authenticate \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d "client_id=$NEXT_PUBLIC_AUTODESK_CLIENT_ID" \
+  -d "client_secret=$NEXT_PUBLIC_AUTODESK_CLIENT_SECRET" \
+  -d 'grant_type=client_credentials' \
+  -d 'scope=viewables:read'
+```
+
+The response JSON contains an `access_token` to pass into `<AutodeskViewer/>`.
+
+### Autodesk Viewer Setup
+
+```tsx
+import AutodeskViewer from '@/components/autodesk-viewer';
+
+// token = Forge access token from the request above
+<AutodeskViewer modelUrn="your-model-urn" token={token} />;
+```
 
 ---
 
