@@ -55,7 +55,7 @@ $ git clone https://github.com/your‑org/carboncanvas-fe.git
 $ cd carboncanvas-fe && npm install
 
 # 2. Copy env vars and run dev server
-$ cp .env.example .env.local   # edit SPECKLE_SERVER_URL etc.
+$ cp .env.example .env.local   # edit env vars as needed
 $ npm run dev                  # http://localhost:3000
 ```
 
@@ -111,7 +111,7 @@ Constraints: ≤ 120 LOC per file; follow Prettier; use British English in c
 ### Vercel (recommended)
 
 1. Connect repo in Vercel dashboard.
-2. Set environment variables (`SPECKLE_SERVER_URL`, `NEXT_PUBLIC_API_URL`).
+2. Set environment variable (`NEXT_PUBLIC_API_URL`).
 3. Build command: `npm run build`  – Output: *Next.js App*.
 
 ### GitHub Pages
