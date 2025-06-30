@@ -55,11 +55,17 @@ $ git clone https://github.com/your‑org/carboncanvas-fe.git
 $ cd carboncanvas-fe && npm install
 
 # 2. Copy env vars and run dev server
-$ cp .env.example .env.local   # edit SPECKLE_SERVER_URL etc.
+$ cp .env.example .env.local   # edit SPECKLE_SERVER_URL and Autodesk credentials
 $ npm run dev                  # http://localhost:3000
 ```
 
 > **Prerequisites:** Node ≥ 20, npm ≥ 10.  For model viewing you’ll also need access to a running Speckle Server and bearer token.
+
+### Environment Variables
+- `SPECKLE_SERVER_URL` – Speckle Server base URL
+- `NEXT_PUBLIC_API_URL` – API endpoint for the front-end
+- `NEXT_PUBLIC_AUTODESK_CLIENT_ID` – Autodesk client ID
+- `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET` – Autodesk client secret
 
 ---
 
@@ -111,7 +117,7 @@ Constraints: ≤ 120 LOC per file; follow Prettier; use British English in c
 ### Vercel (recommended)
 
 1. Connect repo in Vercel dashboard.
-2. Set environment variables (`SPECKLE_SERVER_URL`, `NEXT_PUBLIC_API_URL`).
+2. Set environment variables (`SPECKLE_SERVER_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_AUTODESK_CLIENT_ID`, `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET`).
 3. Build command: `npm run build`  – Output: *Next.js App*.
 
 ### GitHub Pages
