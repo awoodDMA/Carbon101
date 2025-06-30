@@ -61,6 +61,12 @@ $ npm run dev                  # http://localhost:3000
 
 > **Prerequisites:** Node ≥ 20, npm ≥ 10.  For model viewing you’ll also need access to a running Speckle Server and bearer token.
 
+### Environment Variables
+
+- `NEXT_PUBLIC_API_URL` – URL of the Carbon101 back end.
+- `NEXT_PUBLIC_AUTODESK_CLIENT_ID` – Autodesk Forge client ID.
+- `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET` – Autodesk Forge client secret.
+
 ---
 
 ## 🤖  Working with **Codex**
@@ -111,7 +117,9 @@ Constraints: ≤ 120 LOC per file; follow Prettier; use British English in c
 ### Vercel (recommended)
 
 1. Connect repo in Vercel dashboard.
-2. Set environment variable (`NEXT_PUBLIC_API_URL`).
+2. Set environment variables (`NEXT_PUBLIC_API_URL`,
+   `NEXT_PUBLIC_AUTODESK_CLIENT_ID`,
+   `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET`).
 3. Build command: `npm run build`  – Output: *Next.js App*.
 
 ### GitHub Pages
