@@ -17,6 +17,7 @@
     "@tanstack/react-query": "^5.80.10",
     "@trpc/client": "^11.4.2",
     "@trpc/react-query": "^11.4.2",
+    "@types/forge-viewer": "^7.99.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "echarts": "^5.6.0",
