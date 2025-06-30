@@ -21,9 +21,6 @@
     "paths": {
       "@/*": [
         "./*"
-      ],
-      "@speckle/viewer-react": [
-        "./lib/viewer-react.tsx"
       ]
     },
     "plugins": [
