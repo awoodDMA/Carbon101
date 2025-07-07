@@ -1,6 +1,6 @@
-# 🚀  Carbon101 (working title)
+# 🚀  Carbon101 (working title)
 
-*An open‑source, self‑hosted platform for visualising Revit models, automating quantity take‑offs and calculating embodied carbon – powered by **Speckle** and a modern React front‑end.*
+*An open‑source, self‑hosted platform for visualising Revit models, automating quantity take‑offs and calculating embodied carbon – powered by **Autodesk APS (formerly Forge)** and a modern React front‑end.*
 
 ---
 
@@ -8,23 +8,23 @@
 
 | Area                       | Highlights                                                                                                                        |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Model Hub**              | Upload Revit (and other AEC) models via official Speckle connectors; every *Project → Option → Version* is tracked automatically. |
-| **3‑D Viewer**             | Interactive Speckle Viewer embedded in React; inspect elements, filter by material, isolate layers.                               |
-| **Quantity Take‑Off**      | Back‑end service extracts element area/volume, thickness and material from Speckle objects in real time.                          |
-| **Embodied Carbon Engine** | Integrates ICE, EC3, 2050 Materials and Climatiq APIs to compute tCO₂e per element and per life‑cycle stage (EN 15978 A1–A5).     |
+| **Model Hub**              | Upload Revit (and other AEC) models via Autodesk ACC/BIM 360; every *Project → Option → Version* is tracked automatically. |
+| **3‑D Viewer**             | Interactive Autodesk Viewer embedded in React; inspect elements, filter by material, isolate layers.                               |
+| **Quantity Take‑Off**      | Back‑end service extracts element area/volume, thickness and material from Autodesk model data in real time.                          |
+| **Embodied Carbon Engine** | Integrates ICE, EC3, 2050 Materials and Climatiq APIs to compute tCO₂e per element and per life‑cycle stage (EN 15978 A1–A5).     |
 | **Option Comparison**      | Side‑by‑side tables, radar charts and deltas between design options & model versions.                                             |
 | **Shareable Dashboard**    | Client‑facing dashboard with read‑only token; each chart downloadable as optimised SVG.                                           |
-| **Self‑Hosting**           | All data stays on your own Speckle Server (Docker/K8s); no external vendor lock‑in.                                               |
+| **Self‑Hosting**           | All data stays secure with your Autodesk APS integration; flexible deployment options.                                               |
 
 ---
 
 ## 🖥️  Tech Stack
 
-* **Front‑end:** Next.js 14 (React 19, App Router) • TypeScript • Tailwind CSS • shadcn/ui • Framer Motion • Apache ECharts
-* **3‑D Viewer:** `@speckle/viewer`
-* **State/Data:** tRPC • TanStack React Query • Zustand (lightweight client state)
-* **Back‑end (separate repo):** NestJS • Python Calc Engine • PostgreSQL/TimescaleDB
-* **Tooling:** ESLint • Prettier • Jest • Playwright • GitHub Actions CI
+* **Front‑end:** Next.js 14 (React 19, App Router) • TypeScript • Tailwind CSS • shadcn/ui • Framer Motion • Apache ECharts
+* **3‑D Viewer:** Autodesk Platform Services (APS) Viewer
+* **State/Data:** tRPC • TanStack React Query • Zustand (lightweight client state)
+* **Back‑end (separate repo):** NestJS • Python Calc Engine • PostgreSQL/TimescaleDB
+* **Tooling:** ESLint • Prettier • Jest • Playwright • GitHub Actions CI
 * **Licence:** MIT
 
 ---
@@ -54,41 +54,11 @@ carboncanvas-fe/
 $ git clone https://github.com/your‑org/carboncanvas-fe.git
 $ cd carboncanvas-fe && npm install
 
-# 2. Copy env vars and run dev server
-$ cp .env.example .env.local   # edit env vars as needed
+$ cp .env.example .env.local   # edit APS_CLIENT_ID, APS_CLIENT_SECRET etc.
 $ npm run dev                  # http://localhost:3000
 ```
 
-> **Prerequisites:** Node ≥ 20, npm ≥ 10.  For Autodesk model viewing you’ll also need a Forge access token.
-
-### Environment Variables
-
-- `NEXT_PUBLIC_API_URL` – URL of the Carbon101 back end.
-- `NEXT_PUBLIC_AUTODESK_CLIENT_ID` – Autodesk Forge client ID.
-- `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET` – Autodesk Forge client secret.
-
-To fetch a viewer token, run:
-
-```bash
-curl -X POST \
-  https://developer.api.autodesk.com/authentication/v1/authenticate \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d "client_id=$NEXT_PUBLIC_AUTODESK_CLIENT_ID" \
-  -d "client_secret=$NEXT_PUBLIC_AUTODESK_CLIENT_SECRET" \
-  -d 'grant_type=client_credentials' \
-  -d 'scope=viewables:read'
-```
-
-The response JSON contains an `access_token` to pass into `<AutodeskViewer/>`.
-
-### Autodesk Viewer Setup
-
-```tsx
-import AutodeskViewer from '@/components/autodesk-viewer';
-
-// token = Forge access token from the request above
-<AutodeskViewer modelUrn="your-model-urn" token={token} />;
-```
+> **Prerequisites:** Node ≥ 20, npm ≥ 10.  For model viewing you'll also need Autodesk APS credentials and access to BIM 360/ACC.
 
 ---
 
@@ -98,12 +68,12 @@ This repo is designed for *prompt‑driven development*.  Every issue or PR shou
 
 ### Prompt Template
 
-Paste the snippet below into Copilot Chat / ChatGPT ‑ GitHub when starting a new task:
+Paste the snippet below into Copilot Chat / ChatGPT ‑ GitHub when starting a new task:
 
 ```
-Context: <repo‑path>; Next.js 14 + TypeScript + Tailwind.
+Context: <repo‑path>; Next.js 14 + TypeScript + Tailwind.
 Task: <clear behaviour + acceptance test>.
-Constraints: ≤ 120 LOC per file; follow Prettier; use British English in comments.
+Constraints: ≤ 120 LOC per file; follow Prettier; use British English in comments.
 ```
 
 ### Coding Conventions
@@ -140,12 +110,17 @@ Constraints: ≤ 120 LOC per file; follow Prettier; use British English in c
 ### Vercel (recommended)
 
 1. Connect repo in Vercel dashboard.
+<<<<<<< HEAD
 2. Set environment variables (`NEXT_PUBLIC_API_URL`,
    `NEXT_PUBLIC_AUTODESK_CLIENT_ID`,
    `NEXT_PUBLIC_AUTODESK_CLIENT_SECRET`).
 3. Build command: `npm run build`  – Output: *Next.js App*.
+=======
+2. Set environment variables (`APS_CLIENT_ID`, `APS_CLIENT_SECRET`, `NEXT_PUBLIC_API_URL`).
+3. Build command: `npm run build`  – Output: *Next.js App*.
+>>>>>>> 12bc22b (All changes 07.07.25)
 
-### GitHub Pages
+### GitHub Pages
 
 ```yaml
 # .github/workflows/deploy.yml (excerpt)
@@ -169,4 +144,4 @@ Distributed under the **MIT Licence**.  See `LICENCE` for full text.
 
 ---
 
-> © 2025 *Your Organisation / Git Club*.  Built with passion for cleaner, low‑carbon architecture.
+> © 2025 *Your Organisation / Git Club*.  Built with passion for cleaner, low‑carbon architecture.

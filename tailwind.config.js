@@ -59,8 +59,19 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', ...fontFamily.sans],
+        sans: ['Roboto', ...fontFamily.sans],
         mono: ['Fira Code', ...fontFamily.mono],
+      },
+      screens: {
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1200px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
+      spacing: {
+        '18': '4.5rem', /* 72px */
+        '60': '15rem', /* 240px */
       },
     },
   },
