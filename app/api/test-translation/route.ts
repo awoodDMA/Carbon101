@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  console.log('🧪 Test Translation: Starting test...');
+  console.log('🚨 PREMIUM API DISABLED: Test translation API blocked to prevent charges');
   
+  return NextResponse.json({
+    success: false,
+    error: 'Premium test translation API has been disabled',
+    details: 'This endpoint submits real Model Derivative translation jobs which incur charges. Testing has been disabled to prevent costs.',
+    alternativeEndpoint: '/api/aec/designs',
+    usedFreeAPI: false,
+    premiumAPIBlocked: true,
+    testingDisabled: true
+  }, { status: 403 });
+  
+  /*
+  // ORIGINAL PREMIUM CODE COMMENTED OUT TO PREVENT CHARGES
   try {
     // Get access token from cookies
     const accessToken = request.cookies.get('aps_access_token')?.value;
@@ -105,4 +117,5 @@ export async function GET(request: NextRequest) {
       details: 'Failed to test Model Derivative API access'
     }, { status: 500 });
   }
+  */
 }

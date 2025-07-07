@@ -16,7 +16,21 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter } from 'next/navigation';
-import { mockProjects, type Project, type DesignOption, addProject, getLiveProjects, updateProjectPrimaryOption, updateProject } from '@/lib/projectData';
+import { getAllProjects, getOptionsByProjectId, type Project as RelationalProject, type DesignOption, type APSModelAssignment } from '@/lib/relational-data';
+
+// Local type for sidebar that includes options (legacy compatibility)
+interface Project extends RelationalProject {
+  options: Array<{
+    id: string;
+    name: string;
+    carbon: number;
+    systems: any[];
+    systemsData: any[];
+    productsData: any[];
+    linkedModel?: APSModelAssignment;
+    metadata: any;
+  }>;
+}
 import NewProjectModal, { type NewProjectData } from './NewProjectModal';
 import ProjectInfoCard from './ProjectInfoCard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,8 +42,32 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(true);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const [currentProject, setCurrentProject] = useState<Project>(mockProjects[0]);
-  const [liveProjects, setLiveProjects] = useState<Project[]>(mockProjects);
+  // Helper function to get projects with options in the format expected by sidebar
+  const getProjectsWithOptions = () => {
+    const projects = getAllProjects();
+    return projects.map(project => {
+      const options = getOptionsByProjectId(project.id);
+      return {
+        ...project,
+        options: options.map(option => ({
+          id: option.optionLetter,
+          name: option.name,
+          carbon: option.carbon,
+          systems: option.systems,
+          systemsData: option.systemsData,
+          productsData: option.productsData,
+          linkedModel: option.linkedModel,
+          metadata: option.metadata
+        }))
+      };
+    });
+  };
+
+  const [currentProject, setCurrentProject] = useState<Project>(() => {
+    const projects = getProjectsWithOptions();
+    return projects[0] || {} as Project;
+  });
+  const [liveProjects, setLiveProjects] = useState<Project[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showProjectInfo, setShowProjectInfo] = useState(false);
 
@@ -58,8 +96,8 @@ export default function Sidebar() {
       console.warn('Sidebar: localStorage not available (Codespaces environment)');
     }
     
-    // Set live projects
-    setLiveProjects(getLiveProjects());
+    // Set live projects using relational data
+    setLiveProjects(getProjectsWithOptions());
   }, []);
   
   // Force mounting in Codespaces environment
@@ -91,7 +129,7 @@ export default function Sidebar() {
     const match = pathname.match(/\/projects\/([^/]+)/);
     if (match) {
       const projectId = match[1];
-      const project = getLiveProjects().find(p => p.id === projectId);
+      const project = getProjectsWithOptions().find(p => p.id === projectId);
       if (project && project.id !== currentProject.id) {
         // Use a transition to make the switch smoother
         requestAnimationFrame(() => {
@@ -129,66 +167,14 @@ export default function Sidebar() {
   }, [pathname]);
 
   const handleNewProject = (projectData: NewProjectData) => {
-    // In a real app, this would make an API call
-    console.log('Creating new project:', projectData);
-    
-    // Generate next 3-digit project number
-    const existingProjects = getLiveProjects();
-    const maxNumber = existingProjects.reduce((max, project) => {
-      const num = parseInt(project.projectNumber);
-      return isNaN(num) ? max : Math.max(max, num);
-    }, 0);
-    const nextNumber = (maxNumber + 1).toString().padStart(3, '0');
-
-    // For now, just create a mock project with default options
-    const newProject: Project = {
-      id: `p${Date.now()}`, // Simple ID generation
-      name: projectData.name,
-      projectNumber: nextNumber,
-      gia: projectData.gia,
-      nia: projectData.nia,
-      gea: projectData.gea,
-      status: 'Live',
-      sector: projectData.sector,
-      thumbnail: projectData.thumbnail ? URL.createObjectURL(projectData.thumbnail) : undefined,
-      primaryOptionId: 'A',
-      options: [
-        {
-          id: 'A',
-          name: 'Default Option',
-          carbon: 0,
-          systems: [],
-          systemsData: [],
-          productsData: [],
-          apsModels: [],
-          metadata: {
-            description: 'Initial option for new project',
-            lastModified: new Date().toISOString(),
-            modifiedBy: 'System',
-            version: 1,
-            takeoffMethod: 'Manual' as const,
-            calculationStatus: 'Draft' as const
-          }
-        },
-      ],
-    };
-
-    // Add to global project store
-    addProject(newProject);
-    setLiveProjects(getLiveProjects());
-    setCurrentProject(newProject);
+    // TODO: Implement project creation with relational data
+    console.warn('Project creation temporarily disabled during relational migration');
     setShowNewProjectModal(false);
-    
-    // Navigate to the new project
-    router.push(`/projects/${newProject.id}/option-A`);
   };
 
   const handleProjectUpdate = (updatedData: Partial<Project>) => {
-    const updatedProject = updateProject(currentProject.id, updatedData);
-    if (updatedProject) {
-      setCurrentProject(updatedProject);
-      setLiveProjects(getLiveProjects());
-    }
+    // TODO: Implement project updates with relational data
+    console.warn('Project updates temporarily disabled during relational migration');
   };
 
   return (
@@ -264,7 +250,7 @@ export default function Sidebar() {
             </div>
           </div>
           <div className="space-y-1 animate-in fade-in duration-400 delay-200">
-            {currentProject?.options?.map((option: DesignOption, index: number) => (
+            {currentProject?.options?.map((option, index: number) => (
               <button
                 key={option.id}
                 className={cn(
@@ -283,14 +269,14 @@ export default function Sidebar() {
                 </div>
                 <div className="flex-1 min-w-0 flex items-center justify-between">
                   <div className="text-sm truncate text-carbon-black">{option.name}</div>
-                  <button
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      updateProjectPrimaryOption(currentProject?.id || '', option.id);
-                      setCurrentProject(prev => ({ ...prev, primaryOptionId: option.id }));
+                      // TODO: Implement primary option update with relational data
+                      console.warn('Primary option update temporarily disabled');
                     }}
                     className={cn(
-                      "transition-all duration-200 ml-2 flex-shrink-0 tooltip-fast hover:scale-110 active:scale-95",
+                      "transition-all duration-200 ml-2 flex-shrink-0 tooltip-fast hover:scale-110 active:scale-95 cursor-pointer",
                       currentProject?.primaryOptionId === option.id 
                         ? "text-primary" 
                         : "text-muted-foreground hover:text-foreground"
@@ -298,7 +284,7 @@ export default function Sidebar() {
                     data-tooltip={currentProject?.primaryOptionId === option.id ? "Primary option" : "Set as primary"}
                   >
                     <Pin className="w-3 h-3" />
-                  </button>
+                  </div>
                 </div>
               </button>
             )) || []}

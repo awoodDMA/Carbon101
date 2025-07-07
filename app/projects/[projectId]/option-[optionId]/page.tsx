@@ -2,16 +2,16 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Link2, ExternalLink, CheckCircle, Clock, User, FileText, Database, AlertCircle, Play, Settings, Maximize2 } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Link2, ExternalLink, CheckCircle, Clock, User, FileText, Database, AlertCircle, Play, Settings, Maximize2 } from 'lucide-react';
 import ViewerChart from '@/components/ViewerChart';
 import DataTable from '@/components/DataTable';
 import ModelPickerPopup from '@/components/ModelPickerPopup';
 import SimpleAutodeskViewer from '@/components/SimpleAutodeskViewer';
 import EmbodiedCarbonChart from '@/components/EmbodiedCarbonChart';
-import { getAllProjects, type APSModelAssignment } from '@/lib/projectData';
-import { getProjectById, getOptionByProjectAndLetter, getOptionsByProjectId } from '@/lib/relational-data';
-import { updateProjectLinkedModel } from '@/lib/actions';
+import QuantityTakeoffResults from '@/components/QuantityTakeoffResults';
+import { getProjectById, getOptionByProjectAndLetter, getOptionsByProjectId, updateOptionLinkedModel, reloadDataFromStorage, type APSModelAssignment } from '@/lib/relational-data';
+import { QuantityTakeoffResult } from '@/lib/quantity-takeoff';
 
 interface OptionPageProps {
   params: { projectId: string; optionId: string }
@@ -37,11 +37,14 @@ export const revalidate = 0;
 function OptionPageContent({ params }: OptionPageProps) {
   const { projectId, optionId } = params;
   const router = useRouter();
+  const pathname = usePathname();
   
-  // NEW RELATIONAL APPROACH - Separate project and option queries
-  console.log('🚨 USING NEW RELATIONAL DATA STRUCTURE');
-  console.log('🔍 Querying project:', projectId);
-  console.log('🔍 Querying option:', optionId);
+  // Fallback: extract optionId from pathname if params.optionId is undefined
+  const extractedOptionId = optionId || pathname.split('/option-')[1]?.split('/')[0];
+  const finalOptionId = extractedOptionId;
+  
+  
+  // Using relational data structure for proper option switching
   
   const project = getProjectById(projectId);
   if (!project) {
@@ -49,8 +52,9 @@ function OptionPageContent({ params }: OptionPageProps) {
     return <div>Project not found: {projectId}</div>;
   }
   
-  const optionLetter = optionId?.toUpperCase() || 'A';
+  const optionLetter = finalOptionId?.toUpperCase() || 'A';
   const currentOption = getOptionByProjectAndLetter(projectId, optionLetter);
+  
   
   if (!currentOption) {
     console.error('❌ Option not found:', optionLetter);
@@ -62,56 +66,58 @@ function OptionPageContent({ params }: OptionPageProps) {
   // Get all options for this project for sidebar/navigation
   const allProjectOptions = getOptionsByProjectId(projectId);
 
-  // Critical debugging with relational data
-  console.log('🚨 RELATIONAL DEBUG - Option Selection:');
-  console.log('  URL optionId:', optionId);
-  console.log('  Processed optionLetter:', optionLetter);
-  console.log('  Found option name:', currentOption.name);
-  console.log('  Found option carbon:', currentOption.carbon);
-  console.log('  Option A carbon should be 245, Option B should be 198, Option C should be 156');
-  
-  // Log the actual systems data being passed
-  console.log('🚨 RELATIONAL DEBUG - Systems Data:');
-  console.log('  Systems to chart:', currentOption.systems?.map(s => `${s.name}: ${s.carbon}`));
-  
-  // Validate that we're actually getting different options
-  if (optionLetter === 'A' && currentOption.carbon !== 245) {
-    console.error('❌ BUG: Option A should have 245 carbon but has:', currentOption.carbon);
-  }
-  if (optionLetter === 'B' && currentOption.carbon !== 198) {
-    console.error('❌ BUG: Option B should have 198 carbon but has:', currentOption.carbon);
-  }
-  if (optionLetter === 'C' && currentOption.carbon !== 156) {
-    console.error('❌ BUG: Option C should have 156 carbon but has:', currentOption.carbon);
-  }
 
   // State for model linking
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
   const [linkedModel, setLinkedModel] = useState<APSModelAssignment | undefined>(currentOption.linkedModel);
   const [isLinking, setIsLinking] = useState(false);
   const [accessToken, setAccessToken] = useState<string>('');
+  // Fixed viewer height to match the viewer component's internal constraints
+  const VIEWER_HEIGHT = '500px'; // Fixed height to match viewer constraints
 
-  // Update linked model when option changes
+  // Update linked model when option changes or when component mounts
   useEffect(() => {
     console.log('🔄 Option changed, updating linked model:', {
       optionId,
+      optionLetter,
       currentOptionId: currentOption.id,
       linkedModel: currentOption.linkedModel
     });
     setLinkedModel(currentOption.linkedModel);
-  }, [currentOption.linkedModel, optionId, currentOption.id]);
+  }, [optionLetter, currentOption.id, currentOption.linkedModel]);
+
+  // Force refresh of linked model data when component mounts or route changes
+  useEffect(() => {
+    console.log('🔄 Component mounted/route changed - refreshing linked model data');
+    
+    // Reload data from localStorage to ensure we have the latest data
+    reloadDataFromStorage();
+    
+    const freshOption = getOptionByProjectAndLetter(projectId, optionLetter);
+    if (freshOption?.linkedModel) {
+      console.log('🔄 Found persisted linked model:', freshOption.linkedModel.name);
+      setLinkedModel(freshOption.linkedModel);
+    } else {
+      console.log('🔄 No persisted linked model found');
+      setLinkedModel(undefined);
+    }
+  }, [pathname, projectId, optionLetter]); // pathname ensures this runs on navigation
 
   // Fetch access token
   useEffect(() => {
     const fetchToken = async () => {
       try {
+        console.log('🔑 Fetching access token...');
         const response = await fetch('/api/auth/autodesk/token');
         if (response.ok) {
           const data = await response.json();
+          console.log('🔑 Access token received:', data.access_token ? '✅ Present' : '❌ Missing');
           setAccessToken(data.access_token);
+        } else {
+          console.error('🔑 Failed to fetch access token - HTTP', response.status);
         }
       } catch (error) {
-        console.error('Failed to fetch access token:', error);
+        console.error('🔑 Failed to fetch access token:', error);
       }
     };
     fetchToken();
@@ -184,19 +190,23 @@ function OptionPageContent({ params }: OptionPageProps) {
       // Update local state immediately for instant feedback
       setLinkedModel(newLinkedModel);
       
-      // Update via server action
-      console.log('Saving to server...');
-      const result = await updateProjectLinkedModel(projectId, optionLetter, newLinkedModel);
-      console.log('Server update result:', result);
+      // Update via client-side storage using the same function the server action uses
+      console.log('💾 Saving to localStorage...');
+      const success = updateOptionLinkedModel(projectId, optionLetter, newLinkedModel);
+      console.log('💾 LocalStorage update result:', success ? 'SUCCESS' : 'FAILED');
+      
+      if (!success) {
+        throw new Error('Failed to save linked model to localStorage');
+      }
+      
+      // Verify the data was saved by re-reading it
+      const verifyOption = getOptionByProjectAndLetter(projectId, optionLetter);
+      console.log('✅ Verification - saved model:', verifyOption?.linkedModel?.name || 'NOT FOUND');
       
       // Close the browser
       setIsModelBrowserOpen(false);
       
-      console.log('Model linking completed successfully');
-      
-      // Don't refresh/reload the page - it causes URL issues
-      // The local state update is sufficient for immediate feedback
-      console.log('✅ Project Page: Model linked successfully, no page refresh needed');
+      console.log('✅ Model linking completed and verified successfully');
       
     } catch (error) {
       console.error('Failed to link model:', error);
@@ -223,135 +233,181 @@ function OptionPageContent({ params }: OptionPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto">
-        {/* Clean Header - Just Title and Options */}
-        <div className="flex items-center justify-between py-6 px-6">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Option {currentOption.optionLetter} - {currentOption.name} ({currentOption.carbon} tCO₂e)
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsModelBrowserOpen(true)}
-              disabled={isLinking}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              <Link2 className="w-4 h-4" />
-              {isLinking ? 'Linking...' : 'Link Model'}
-            </button>
-          </div>
-        </div>
-
-        {/* 3D Model Viewer - Full Width */}
-        <div className="px-6 mb-8">
-          <div className="w-full h-[500px] rounded-xl overflow-hidden shadow-lg">
-            {linkedModel?.status === 'ready' && linkedModel.viewerUrn ? (
-              <SimpleAutodeskViewer
-                urn={linkedModel.viewerUrn.startsWith('urn:') ? linkedModel.viewerUrn : `urn:${linkedModel.viewerUrn}`}
-                accessToken={accessToken}
-                width="100%"
-                height="100%"
-                onDocumentLoad={(doc) => {
-                  console.log('Option Page: Document loaded:', doc);
-                }}
-                onGeometryLoad={(model) => {
-                  console.log('Option Page: Geometry loaded - ready for quantity takeoff');
-                }}
-                onError={(error) => {
-                  console.error('Option Page: Viewer error:', error);
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-gray-50">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <Maximize2 className="w-10 h-10 text-gray-400" />
-                  </div>
-                  <p className="text-lg font-medium text-gray-900 mb-2">
-                    {!linkedModel ? 'No Model Linked' : 
-                     linkedModel.status === 'processing' ? 'Model Processing' :
-                     linkedModel.status === 'failed' ? 'Model Failed' :
-                     'No Model Available'}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {!linkedModel ? 'Use "Link Model" to connect an Autodesk model' :
-                     linkedModel.status === 'processing' ? 'Model translation is in progress' :
-                     linkedModel.status === 'failed' ? 'Model translation failed' :
-                     'Model not ready for viewing'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Model Caption/Info */}
-          {linkedModel && (
-            <div className="mt-4 px-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">{linkedModel.name}</h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                    <span>Modified {new Date(linkedModel.lastModified).toLocaleDateString()}</span>
-                    <div className="flex items-center gap-1">
-                      <div className={`w-2 h-2 rounded-full ${
-                        linkedModel.status === 'ready' ? 'bg-green-500' :
-                        linkedModel.status === 'processing' ? 'bg-blue-500' :
-                        'bg-red-500'
-                      }`} />
-                      <span className="capitalize">{linkedModel.status}</span>
+      {/* 3D Model Viewer - Responsive Height with Natural Proportions */}
+      <div className="w-full border-b border-gray-200">
+        <div 
+          className="w-full overflow-hidden relative"
+          style={{ 
+            height: VIEWER_HEIGHT // Let model determine its natural proportions within this height
+          }}
+        >
+          {linkedModel?.status === 'ready' && linkedModel.viewerUrn && accessToken ? (
+            (() => {
+                // Validate and prepare URN for the viewer
+                const rawUrn = linkedModel.viewerUrn;
+                console.log('🔍 Option Page: Raw URN from linkedModel:', rawUrn);
+                console.log('🔍 Option Page: URN type:', typeof rawUrn);
+                console.log('🔍 Option Page: URN length:', rawUrn?.length);
+                
+                // Ensure URN is a valid string
+                if (!rawUrn || typeof rawUrn !== 'string' || rawUrn.trim().length === 0) {
+                  console.error('❌ Option Page: Invalid URN - not a valid string');
+                  return (
+                    <div className="flex items-center justify-center h-full bg-red-50">
+                      <div className="text-center text-red-800">
+                        <p className="text-sm font-medium">Invalid Model URN</p>
+                        <p className="text-xs mt-1">The model URN is invalid or missing</p>
+                      </div>
                     </div>
-                  </div>
+                  );
+                }
+                
+                // Check for null/undefined in URN string
+                if (rawUrn.includes('null') || rawUrn.includes('undefined')) {
+                  console.error('❌ Option Page: URN contains null/undefined values:', rawUrn);
+                  return (
+                    <div className="flex items-center justify-center h-full bg-red-50">
+                      <div className="text-center text-red-800">
+                        <p className="text-sm font-medium">Corrupted Model URN</p>
+                        <p className="text-xs mt-1">The model URN contains invalid data</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const finalUrn = rawUrn.startsWith('urn:') ? rawUrn : `urn:${rawUrn}`;
+                console.log('✅ Option Page: Final URN for viewer:', finalUrn);
+                
+                return (
+                  <SimpleAutodeskViewer
+                    urn={finalUrn}
+                    accessToken={accessToken}
+                    width="100%"
+                    height="100%"
+                    onDocumentLoad={(doc) => {
+                      console.log('Option Page: Document loaded:', doc);
+                    }}
+                    onGeometryLoad={(model) => {
+                      console.log('Option Page: Geometry loaded - ready for quantity takeoff');
+                    }}
+                    onError={(error) => {
+                      console.error('Option Page: Viewer error:', error);
+                    }}
+                  />
+                );
+            })()
+          ) : (
+            <div className="flex items-center justify-center h-full bg-gray-50">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Maximize2 className="w-10 h-10 text-gray-400" />
                 </div>
-                <div className="text-right">
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    currentOption.metadata?.calculationStatus === 'Complete' ? 'bg-green-100 text-green-800' :
-                    currentOption.metadata?.calculationStatus === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                    currentOption.metadata?.calculationStatus === 'Review' ? 'bg-orange-100 text-orange-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {currentOption.metadata?.calculationStatus || 'Draft'}
-                  </div>
-                </div>
+                <p className="text-lg font-medium text-gray-900 mb-2">
+                  {!linkedModel ? 'No Model Linked' : 
+                   !accessToken ? 'Loading Authentication...' :
+                   linkedModel.status === 'processing' ? 'Model Processing' :
+                   linkedModel.status === 'failed' ? 'Model Failed' :
+                   !linkedModel.viewerUrn ? 'No Viewer URN' :
+                   'No Model Available'}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {!linkedModel ? 'Use "Link Model" to connect an Autodesk model' :
+                   !accessToken ? 'Authenticating with Autodesk...' :
+                   linkedModel.status === 'processing' ? 'Model translation is in progress' :
+                   linkedModel.status === 'failed' ? 'Model translation failed' :
+                   !linkedModel.viewerUrn ? 'Model URN missing or invalid' :
+                   'Model not ready for viewing'}
+                </p>
               </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Embodied Carbon Chart - Clean Design */}
-        <div className="px-6 mb-8">
-          <div className="bg-white">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Embodied Carbon by System - {currentOption.carbon} tCO₂e Total
-            </h2>
-            <EmbodiedCarbonChart 
-              key={`chart-${projectId}-${optionId}-${currentOption.carbon}-${currentOption.systems.length}`} 
-              systems={currentOption.systems} 
-            />
+
+      {/* Clean Header Section */}
+      <div>
+        <div className="max-w-7xl mx-auto px-6 py-8 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
+                <span>Option {currentOption.optionLetter}</span>
+              </div>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                {currentOption.name}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Dynamic Model Link Button */}
+              {linkedModel && linkedModel.status === 'ready' ? (
+                <div
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors hover:bg-gray-50"
+                  style={{ backgroundColor: 'white', color: '#374151', border: '1px solid #d1d5db' }}
+                  title={linkedModel.name}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Model Linked</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsModelBrowserOpen(true)}
+                  disabled={isLinking}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 hover:bg-gray-300"
+                  style={{ backgroundColor: '#e8e8e8', color: '#666666' }}
+                >
+                  <Link2 className="w-4 h-4" />
+                  <span>{isLinking ? 'Linking...' : 'Link Model'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Data Table - Clean Design */}
-        <div className="px-6 mb-8">
-          <div className="bg-white">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Detailed Breakdown - {currentOption.name}
+      {/* Content Section */}
+      <div className="max-w-7xl mx-auto px-6 py-12 space-y-16">
+        {/* Embodied Carbon Chart */}
+        <section>
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-gray-900">
+              Embodied Carbon by System
             </h2>
-            <DataTable 
-              key={`table-${projectId}-${optionId}-${currentOption.systemsData.length}-${currentOption.productsData.length}`}
-              systemsData={currentOption.systemsData}
-              productsData={currentOption.productsData}
-            />
           </div>
-        </div>
+          <EmbodiedCarbonChart 
+            key={`chart-${projectId}-${optionId}`} 
+            systems={currentOption.systems} 
+          />
+        </section>
+
+        {/* Quantity Takeoff Results */}
+        {linkedModel?.status === 'ready' && linkedModel.viewerUrn && (
+          <section>
+            <QuantityTakeoffResults
+              modelUrn={linkedModel.viewerUrn}
+              projectId={projectId}
+              optionId={finalOptionId}
+              versionId={linkedModel.versionId}
+              onTakeoffComplete={(result: QuantityTakeoffResult) => {
+                console.log('📊 Quantity takeoff completed for option:', finalOptionId, result);
+                // TODO: Update option data with takeoff results
+                // This could trigger recalculation of embodied carbon values
+                // Consider updating the existing charts with real takeoff data
+              }}
+            />
+          </section>
+        )}
+
+        {/* Data Table */}
+        <section>
+          <DataTable 
+            key={`table-${projectId}-${optionId}`}
+            systemsData={currentOption.systemsData}
+            productsData={currentOption.productsData}
+          />
+        </section>
       </div>
 
       {/* Model Picker Popup */}
@@ -365,15 +421,6 @@ function OptionPageContent({ params }: OptionPageProps) {
   );
 }
 
-// Wrapper component that forces remounting when parameters change
 export default function OptionPage({ params }: OptionPageProps) {
-  const { projectId, optionId } = params;
-  
-  // Force complete component remount when route parameters change
-  return (
-    <OptionPageContent 
-      key={`${projectId}-${optionId}`} 
-      params={params} 
-    />
-  );
+  return <OptionPageContent key={`${params.projectId}-${params.optionId}`} params={params} />;
 }

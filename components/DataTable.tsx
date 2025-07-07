@@ -100,17 +100,17 @@ export default function DataTable({ className, systemsData, productsData }: Data
   const data = activeTab === 'systems' ? sortData(displaySystems) : sortData(displayProducts);
 
   return (
-    <div className={cn('bg-white', className)}>
+    <div className={cn('', className)}>
       {/* Header with Tabs */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('systems')}
             className={cn(
-              'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+              'px-4 py-2 text-sm font-medium transition-colors rounded-md',
               activeTab === 'systems'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gray-100 text-gray-700'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-300'
             )}
           >
             Systems
@@ -118,10 +118,10 @@ export default function DataTable({ className, systemsData, productsData }: Data
           <button
             onClick={() => setActiveTab('products')}
             className={cn(
-              'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+              'px-4 py-2 text-sm font-medium transition-colors rounded-md',
               activeTab === 'products'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gray-100 text-gray-700'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-300'
             )}
           >
             Products
@@ -129,7 +129,7 @@ export default function DataTable({ className, systemsData, productsData }: Data
         </div>
         
         <button
-          className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
           onClick={() => {
             // Mock CSV export
             const csvContent = data.map(row => 
@@ -138,20 +138,20 @@ export default function DataTable({ className, systemsData, productsData }: Data
             console.log('CSV Export:', csvContent);
           }}
         >
-          <Download className="w-4 h-4" />
-          Export CSV
+          <Download className="w-3 h-3" />
+          Export
         </button>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px]">
-          <thead className="bg-gray-50">
-            <tr>
+          <thead>
+            <tr className="border-b border-gray-200">
               {activeTab === 'products' && (
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                   <button
-                    className="flex items-center gap-1 hover:text-foreground"
+                    className="flex items-center gap-1 hover:text-gray-700"
                     onClick={() => handleSort('name')}
                   >
                     GUID
@@ -159,43 +159,43 @@ export default function DataTable({ className, systemsData, productsData }: Data
                   </button>
                 </th>
               )}
-              <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+              <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 <button
-                  className="flex items-center gap-1 hover:text-foreground"
+                  className="flex items-center gap-1 hover:text-gray-700"
                   onClick={() => handleSort('name')}
                 >
                   Name
                   <SortIcon field="name" />
                 </button>
               </th>
-              <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+              <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 <button
-                  className="flex items-center gap-1 hover:text-foreground"
+                  className="flex items-center gap-1 hover:text-gray-700"
                   onClick={() => handleSort('quantity')}
                 >
                   Quantity
                   <SortIcon field="quantity" />
                 </button>
               </th>
-              <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+              <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 <button
-                  className="flex items-center gap-1 hover:text-foreground"
+                  className="flex items-center gap-1 hover:text-gray-700"
                   onClick={() => handleSort('carbon')}
                 >
                   Carbon (tCO₂e)
                   <SortIcon field="carbon" />
                 </button>
               </th>
-              <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+              <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 <button
-                  className="flex items-center gap-1 hover:text-foreground"
+                  className="flex items-center gap-1 hover:text-gray-700"
                   onClick={() => handleSort('percentage')}
                 >
                   Percentage
                   <SortIcon field="percentage" />
                 </button>
               </th>
-              <th className="text-left p-4 text-sm font-medium text-muted-foreground w-12">
+              <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase tracking-wide w-12">
                 Actions
               </th>
             </tr>
@@ -204,26 +204,23 @@ export default function DataTable({ className, systemsData, productsData }: Data
             {data.map((row, index) => (
               <tr 
                 key={row.id} 
-                className={cn(
-                  'hover:bg-gray-50 transition-colors',
-                  index % 2 === 1 && 'bg-muted/25'
-                )}
+                className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
               >
                 {activeTab === 'products' && 'guid' in row && (
-                  <td className="p-4 text-sm font-mono text-muted-foreground">
+                  <td className="p-3 text-sm font-mono text-gray-500">
                     <span className="hidden lg:inline">{(row as ProductData).guid}</span>
                     <span className="lg:hidden">{(row as ProductData).guid.slice(0, 8)}...</span>
                   </td>
                 )}
-                <td className="p-4 text-sm font-medium">{row.name}</td>
-                <td className="p-4 text-sm carbon-value">
+                <td className="p-3 text-sm text-gray-900">{row.name}</td>
+                <td className="p-3 text-sm text-gray-600">
                   {row.quantity.toLocaleString()} {row.unit}
                 </td>
-                <td className="p-4 text-sm font-medium carbon-value">{row.carbon}</td>
-                <td className="p-4 text-sm text-muted-foreground">{row.percentage}%</td>
-                <td className="p-4">
+                <td className="p-3 text-sm font-medium text-gray-900">{row.carbon}</td>
+                <td className="p-3 text-sm text-gray-500">{row.percentage}%</td>
+                <td className="p-3">
                   <button
-                    className="p-1 hover:bg-accent rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
                     title="More actions"
                   >
                     <MoreVertical className="w-4 h-4" />

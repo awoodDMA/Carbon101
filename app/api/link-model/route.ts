@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateProject, type APSModelAssignment, getAllProjects } from '@/lib/projectData';
+import { updateOptionLinkedModel, getProjectById, getOptionByProjectAndLetter, type APSModelAssignment } from '@/lib/relational-data';
 import { revalidatePath } from 'next/cache';
 
 export async function POST(request: NextRequest) {
@@ -40,10 +40,7 @@ export async function POST(request: NextRequest) {
     
     // Get the current project
     console.log('📁 API Loading project data...');
-    const projects = getAllProjects();
-    console.log('📊 API Total projects loaded:', projects.length);
-    
-    const project = projects.find(p => p.id === projectId);
+    const project = getProjectById(projectId);
     console.log('🎯 API Project found:', project ? `"${project.name}"` : 'NOT FOUND');
     
     if (!project) {
@@ -56,12 +53,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if option exists
-    const existingOption = project.options.find(opt => opt.id === optionId);
+    // Check if option exists - optionId is the option letter (A, B, C)
+    const existingOption = getOptionByProjectAndLetter(projectId, optionId);
     console.log('🎯 API Option found:', existingOption ? `"${existingOption.name}"` : 'NOT FOUND');
     
     if (!existingOption) {
-      const errorMessage = `Option not found with ID: ${optionId} in project ${projectId}`;
+      const errorMessage = `Option not found with letter: ${optionId} in project ${projectId}`;
       console.error('❌ API Option Error:', errorMessage);
       
       return NextResponse.json(
@@ -70,17 +67,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update the specific option's linked model
+    // Update the option's linked model using relational data
     console.log('🔄 API Updating option with linked model...');
-    const updatedOptions = project.options.map(option => 
-      option.id === optionId 
-        ? { ...option, linkedModel }
-        : option
-    );
-
     console.log('💾 API Saving project data...');
-    // Update the project
-    const updateResult = updateProject(projectId, { options: updatedOptions });
+    const updateResult = updateOptionLinkedModel(projectId, optionId, linkedModel);
     console.log('💾 API Update result:', updateResult ? 'SUCCESS' : 'FAILED');
     
     // Revalidate all related pages

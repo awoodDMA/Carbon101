@@ -145,3 +145,84 @@ export function getClientInfo(request: NextRequest) {
   
   return { ipAddress, userAgent };
 }
+
+// APS (Autodesk Platform Services) Authentication
+import { AutodeskAPSService } from './autodesk-aps';
+
+export interface APSTokenData {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token?: string;
+}
+
+/**
+ * Get APS access token from request cookies or generate app token
+ * This function is used for server-side API operations that need APS access
+ */
+export async function getAccessToken(request?: NextRequest): Promise<APSTokenData | null> {
+  try {
+    // Try to get user token from cookies first
+    if (request) {
+      const accessToken = request.cookies.get('aps_access_token')?.value;
+      const refreshToken = request.cookies.get('aps_refresh_token')?.value;
+      
+      if (accessToken) {
+        return {
+          access_token: accessToken,
+          token_type: 'Bearer',
+          expires_in: 3600,
+          refresh_token: refreshToken
+        };
+      }
+    }
+    
+    // Fallback to app token for server-side operations
+    const apsService = new AutodeskAPSService(
+      process.env.NEXT_PUBLIC_APS_CLIENT_ID,
+      process.env.APS_CLIENT_SECRET
+    );
+    
+    const appToken = await apsService.getAppToken([
+      'data:read',
+      'viewables:read',
+      'aecdm:read' // Required for AEC Data Model GraphQL API (FREE)
+      // 'code:all' scope REMOVED to prevent Model Derivative API charges
+    ]);
+    
+    return appToken;
+    
+  } catch (error) {
+    console.error('❌ Failed to get APS access token:', error);
+    return null;
+  }
+}
+
+/**
+ * Create authenticated APS service instance
+ */
+export async function createAuthenticatedAPSService(request?: NextRequest): Promise<AutodeskAPSService | null> {
+  try {
+    const tokenData = await getAccessToken(request);
+    if (!tokenData) {
+      return null;
+    }
+    
+    const apsService = new AutodeskAPSService(
+      process.env.NEXT_PUBLIC_APS_CLIENT_ID,
+      process.env.APS_CLIENT_SECRET
+    );
+    
+    apsService.setToken(
+      tokenData.access_token,
+      tokenData.refresh_token,
+      tokenData.expires_in
+    );
+    
+    return apsService;
+    
+  } catch (error) {
+    console.error('❌ Failed to create authenticated APS service:', error);
+    return null;
+  }
+}

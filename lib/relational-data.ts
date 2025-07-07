@@ -79,33 +79,11 @@ export interface OptionMetadata {
   calculationStatus: 'Draft' | 'In Progress' | 'Complete' | 'Review';
 }
 
-// Separate data stores
-const projects: Project[] = [
-  {
-    id: 'p1',
-    name: 'Office Building Renovation',
-    projectNumber: '001',
-    gia: 12500,
-    nia: 10800,
-    gea: 15200,
-    status: 'Live',
-    sector: 'Commercial',
-    primaryOptionId: 'p1-a'
-  },
-  {
-    id: 'p2',
-    name: 'Residential Complex Phase 2',
-    projectNumber: '002',
-    gia: 8500,
-    nia: 7200,
-    gea: 9800,
-    status: 'Live',
-    sector: 'Residential',
-    primaryOptionId: 'p2-a'
-  }
-];
+// Storage key for localStorage
+const STORAGE_KEY = 'carbon101-design-options';
 
-const designOptions: DesignOption[] = [
+// Default data
+const getDefaultOptions = (): DesignOption[] => [
   // Project 1 Options
   {
     id: 'p1-a',
@@ -290,31 +268,177 @@ const designOptions: DesignOption[] = [
   }
 ];
 
+// Initialize data with localStorage support
+const initializeData = (): DesignOption[] => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('💾 Loaded data from localStorage:', parsed.length, 'options');
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Failed to parse saved data:', error);
+    }
+  }
+  console.log('💾 Using default data');
+  return getDefaultOptions();
+};
+
+// Save data to localStorage
+const saveData = (options: DesignOption[]) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(options));
+      console.log('💾 Data saved to localStorage:', options.length, 'options');
+    } catch (error) {
+      console.error('Failed to save data to localStorage:', error);
+    }
+  }
+};
+
+// Separate data stores
+let projects: Project[] = [
+  {
+    id: 'p1',
+    name: 'Office Building Renovation',
+    projectNumber: '001',
+    gia: 12500,
+    nia: 10800,
+    gea: 15200,
+    status: 'Live',
+    sector: 'Commercial',
+    primaryOptionId: 'p1-a'
+  },
+  {
+    id: 'p2',
+    name: 'Residential Complex Phase 2',
+    projectNumber: '002',
+    gia: 8500,
+    nia: 7200,
+    gea: 9800,
+    status: 'Live',
+    sector: 'Residential',
+    primaryOptionId: 'p2-a'
+  }
+];
+
+let designOptions: DesignOption[] = initializeData();
+
+// Function to reload data from localStorage
+export const reloadDataFromStorage = (): void => {
+  console.log('🔄 Reloading data from localStorage...');
+  designOptions = initializeData();
+  console.log('🔄 Reloaded', designOptions.length, 'options from storage');
+};
+
 // Relational query functions
 export const getProjectById = (projectId: string): Project | undefined => {
-  console.log('🔍 getProjectById called with:', projectId);
-  const project = projects.find(p => p.id === projectId);
-  console.log('🔍 Found project:', project?.name || 'NOT FOUND');
-  return project;
+  return projects.find(p => p.id === projectId);
 };
 
 export const getOptionsByProjectId = (projectId: string): DesignOption[] => {
-  console.log('🔍 getOptionsByProjectId called with:', projectId);
-  const options = designOptions.filter(o => o.projectId === projectId);
-  console.log('🔍 Found options:', options.map(o => `${o.optionLetter}: ${o.name} (${o.carbon} tCO₂e)`));
-  return options;
+  return designOptions.filter(o => o.projectId === projectId);
 };
 
 export const getOptionByProjectAndLetter = (projectId: string, optionLetter: string): DesignOption | undefined => {
-  console.log('🔍 getOptionByProjectAndLetter called with:', { projectId, optionLetter });
   const option = designOptions.find(o => o.projectId === projectId && o.optionLetter === optionLetter);
-  console.log('🔍 Found option:', option ? `${option.optionLetter}: ${option.name} (${option.carbon} tCO₂e)` : 'NOT FOUND');
+  console.log('🔍 getOptionByProjectAndLetter called:', { 
+    projectId, 
+    optionLetter, 
+    foundOption: option?.name, 
+    linkedModel: option?.linkedModel?.name || 'undefined',
+    linkedModelStatus: option?.linkedModel?.status || 'undefined',
+    linkedModelUrn: option?.linkedModel?.viewerUrn || 'undefined'
+  });
   return option;
 };
 
 export const getAllProjects = (): Project[] => {
-  console.log('🔍 getAllProjects called, returning', projects.length, 'projects');
   return projects;
+};
+
+// Update functions for modifying data
+export const updateOptionLinkedModel = (projectId: string, optionLetter: string, linkedModel: APSModelAssignment): boolean => {
+  console.log('🔧 updateOptionLinkedModel called:', { 
+    projectId, 
+    optionLetter, 
+    linkedModel: {
+      name: linkedModel.name,
+      status: linkedModel.status,
+      viewerUrn: linkedModel.viewerUrn
+    }
+  });
+  
+  console.log('🔧 Current designOptions array length:', designOptions.length);
+  console.log('🔧 Looking for option with projectId:', projectId, 'optionLetter:', optionLetter);
+  
+  // Debug: list all available options
+  designOptions.forEach((opt, idx) => {
+    console.log(`🔧 Option ${idx}:`, {
+      id: opt.id,
+      projectId: opt.projectId,
+      optionLetter: opt.optionLetter,
+      name: opt.name,
+      hasLinkedModel: !!opt.linkedModel
+    });
+  });
+  
+  const optionIndex = designOptions.findIndex(o => o.projectId === projectId && o.optionLetter === optionLetter);
+  console.log('🔧 Found option at index:', optionIndex);
+  
+  if (optionIndex === -1) {
+    console.log('❌ Option not found for update');
+    return false;
+  }
+  
+  console.log('🔧 Before update - linkedModel:', designOptions[optionIndex].linkedModel?.name || 'undefined');
+  
+  designOptions[optionIndex] = {
+    ...designOptions[optionIndex],
+    linkedModel,
+    metadata: {
+      ...designOptions[optionIndex].metadata,
+      lastModified: new Date().toISOString(),
+      modifiedBy: 'System'
+    }
+  };
+  
+  console.log('✅ After update - linkedModel:', designOptions[optionIndex].linkedModel?.name);
+  console.log('✅ After update - linkedModel status:', designOptions[optionIndex].linkedModel?.status);
+  console.log('✅ After update - linkedModel URN:', designOptions[optionIndex].linkedModel?.viewerUrn);
+  
+  // Save to localStorage immediately
+  saveData(designOptions);
+  
+  return true;
+};
+
+export const updateOptionApsModels = (projectId: string, optionLetter: string, apsModels: APSModelAssignment[]): boolean => {
+  const optionIndex = designOptions.findIndex(o => o.projectId === projectId && o.optionLetter === optionLetter);
+  
+  if (optionIndex === -1) {
+    return false;
+  }
+  
+  // For now, store the first model as linkedModel (maintaining compatibility)
+  const linkedModel = apsModels.length > 0 ? apsModels[0] : undefined;
+  
+  designOptions[optionIndex] = {
+    ...designOptions[optionIndex],
+    linkedModel,
+    metadata: {
+      ...designOptions[optionIndex].metadata,
+      lastModified: new Date().toISOString(),
+      modifiedBy: 'System'
+    }
+  };
+  
+  // Save to localStorage immediately
+  saveData(designOptions);
+  
+  return true;
 };
 
 // Convert to old format for compatibility with existing components

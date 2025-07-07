@@ -245,8 +245,8 @@ class AutodeskAPSService {
   async getAppToken(scopes: string[] = [
     'data:read', 
     'viewables:read',
-    'aecdm:read',  // Required for AEC Data Model GraphQL API
-    'code:all'    // Required for Model Derivative API
+    'aecdm:read'  // Required for AEC Data Model GraphQL API (FREE)
+    // 'code:all' scope REMOVED to prevent Model Derivative API charges
   ]): Promise<APSToken> {
     if (!this.clientId || !this.clientSecret) {
       throw new Error('APS Client ID and Client Secret are required');
@@ -283,8 +283,8 @@ class AutodeskAPSService {
   getAuthorizationUrl(scopes: string[] = [
     'data:read', 
     'viewables:read',
-    'aecdm:read',  // Required for AEC Data Model GraphQL API
-    'code:all'    // Required for Model Derivative API
+    'aecdm:read'  // Required for AEC Data Model GraphQL API (FREE)
+    // 'code:all' scope REMOVED to prevent Model Derivative API charges
   ], state?: string): string {
     const redirectUri = process.env.NEXT_PUBLIC_APS_CALLBACK_URL || `${window.location.origin}/api/auth/autodesk/callback`;
     const params = new URLSearchParams({
@@ -551,6 +551,21 @@ class AutodeskAPSService {
     const data = await response.json();
     console.log('📄 APS: Version data received:', JSON.stringify(data, null, 2));
     
+    console.log('📄 APS: Available relationships:', Object.keys(data.data?.relationships || {}));
+    
+    // Check for derivatives first (pre-translated models in BIM 360)
+    const derivativeId = data.data?.relationships?.derivatives?.data?.id;
+    if (derivativeId) {
+      console.log('✅ APS: Found derivative URN (pre-translated model):', derivativeId);
+      console.log('🎯 APS: Using derivative URN instead of storage URN for viewable model');
+      return derivativeId;
+    }
+    
+    // Check for viewable status in extension data
+    const viewableStatus = data.data?.attributes?.extension?.data?.viewableStatus;
+    console.log('📊 APS: Viewable status from extension:', viewableStatus);
+    
+    // Fall back to storage URN if no derivatives
     const storageId = data.data?.relationships?.storage?.data?.id;
     
     if (!storageId) {
@@ -560,6 +575,7 @@ class AutodeskAPSService {
     }
 
     console.log('✅ APS: Storage URN extracted:', storageId);
+    console.log('ℹ️ APS: No derivatives found - using storage URN (may need translation)');
     return storageId;
   }
 
@@ -594,29 +610,38 @@ class AutodeskAPSService {
    * This creates the proper base64 URN needed for Model Derivative API
    */
   getViewerUrn(storageUrn: string): string {
+    // Check if this is already a derivative URN (pre-translated from BIM 360)
+    // Derivative URNs are base64 strings that may contain underscores and other URL-safe chars
+    if (storageUrn.match(/^[A-Za-z0-9+/_-]+={0,2}$/) || storageUrn.includes('dXJu')) {
+      console.log('🎯 APS: Using derivative URN directly (already base64 encoded):', storageUrn);
+      return `urn:${storageUrn}`;
+    }
+    
     // Convert storage URN to base64 for viewer and add urn: prefix
+    console.log('🔧 APS: Converting storage URN to base64 for viewer');
     const base64Urn = btoa(storageUrn).replace(/=/g, '');
     return `urn:${base64Urn}`;
   }
 
   /**
-   * Submit model for translation to Model Derivative API
+   * SMART Translation Check - Only checks existing translations, doesn't submit new ones
+   * This prevents charges while allowing access to already-translated BIM 360 models
    */
   async translateModel(storageUrn: string): Promise<{ urn: string; status: string }> {
     await this.ensureValidToken();
 
     const viewerUrn = this.getViewerUrn(storageUrn);
     
-    console.log('🔧 APS: Starting translation for storage URN:', storageUrn);
-    console.log('🔧 APS: Generated viewer URN:', viewerUrn);
+    console.log('🔍 APS Smart Translation: Checking existing translation for storage URN:', storageUrn);
+    console.log('🔍 APS Smart Translation: Generated viewer URN:', viewerUrn);
 
-    // First check if translation already exists
+    // Check if translation already exists (FREE operation)
     try {
       const existingStatus = await this.getTranslationStatus(viewerUrn);
-      console.log('🔧 APS: Existing translation status:', existingStatus);
+      console.log('📊 APS Smart Translation: Existing translation status:', existingStatus);
       
       if (existingStatus.status === 'success') {
-        console.log('✅ APS: Model already translated successfully');
+        console.log('✅ APS Smart Translation: Model already translated successfully');
         return {
           urn: viewerUrn,
           status: 'success'
@@ -624,15 +649,39 @@ class AutodeskAPSService {
       }
       
       if (existingStatus.status === 'inprogress') {
-        console.log('⏳ APS: Model translation already in progress');
+        console.log('⏳ APS Smart Translation: Model translation already in progress');
         return {
           urn: viewerUrn,
           status: 'inprogress'
         };
       }
+      
+      // If status is failed, pending, or not_started - refuse to submit new translation
+      console.log('🚫 APS Smart Translation: Model needs new translation - refusing to prevent charges');
+      return {
+        urn: viewerUrn,
+        status: 'not_translated'
+      };
+      
     } catch (statusError) {
-      console.log('🔧 APS: No existing translation found, will submit new job');
+      console.log('🚫 APS Smart Translation: No existing translation found - refusing to submit new job to prevent charges');
+      return {
+        urn: viewerUrn,
+        status: 'not_translated'
+      };
     }
+  }
+
+  /**
+   * DEPRECATED: Original translateModel function that submits new translation jobs
+   * This has been replaced with smart translation checking to prevent charges
+   */
+  private async submitNewTranslationJob(storageUrn: string): Promise<{ urn: string; status: string }> {
+    // This method is intentionally disabled to prevent accidental translation charges
+    throw new Error('New translation job submission is disabled to prevent charges. Use already-translated models from BIM 360 instead.');
+    
+    /*
+    // ORIGINAL CODE COMMENTED OUT TO PREVENT CHARGES
 
     // For translation API, we need the base64 URN without the "urn:" prefix
     const base64Urn = viewerUrn.startsWith('urn:') ? viewerUrn.substring(4) : viewerUrn;
@@ -696,6 +745,7 @@ class AutodeskAPSService {
       urn: viewerUrn,
       status: data.result || 'submitted'
     };
+    */
   }
 
   /**
@@ -707,17 +757,35 @@ class AutodeskAPSService {
     // For API calls, we need the base64 URN without the "urn:" prefix
     const base64Urn = urn.startsWith('urn:') ? urn.substring(4) : urn;
 
+    console.log('🔍 APS: Checking manifest for base64 URN:', base64Urn);
+    console.log('🔍 APS: Full manifest URL:', `${this.baseUrl}/modelderivative/v2/designdata/${encodeURIComponent(base64Urn)}/manifest`);
+
     const response = await fetch(`${this.baseUrl}/modelderivative/v2/designdata/${encodeURIComponent(base64Urn)}/manifest`, {
       headers: {
         'Authorization': `Bearer ${this.accessToken}`,
       },
     });
 
+    console.log('📊 APS: Manifest response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.log('📊 APS: Manifest error response:', errorText);
+      
+      // Try to parse the error for more details
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.log('📊 APS: Parsed manifest error:', errorJson);
+      } catch (e) {
+        console.log('📊 APS: Could not parse manifest error as JSON');
+      }
+      
       return { status: 'not_started', progress: '0%', hasThumbnail: false };
     }
 
     const data = await response.json();
+    console.log('📊 APS: Manifest data received:', JSON.stringify(data, null, 2));
+    
     return {
       status: data.status || 'unknown',
       progress: data.progress || '0%',

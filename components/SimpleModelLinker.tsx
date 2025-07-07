@@ -10,7 +10,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { apsService, type APSProject, type APSHub, type APSItem, type APSVersion } from '@/lib/autodesk-aps';
-import { type APSModelAssignment } from '@/lib/projectData';
+import { type APSModelAssignment } from '@/lib/relational-data';
+import { updateProjectLinkedModel } from '@/lib/actions';
 
 interface SimpleModelLinkerProps {
   projectId: string;
@@ -179,20 +180,8 @@ export default function SimpleModelLinker({
 
       setLinkedModel(newLinkedModel);
       
-      // Link via API route (avoiding server actions for now)
-      const response = await fetch('/api/link-model', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          projectId,
-          optionId,
-          linkedModel: newLinkedModel
-        })
-      });
-      
-      const result = await response.json();
+      // Link via server action (consistent with main option page)
+      const result = await updateProjectLinkedModel(projectId, optionId, newLinkedModel);
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to link model');

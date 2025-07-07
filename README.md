@@ -8,9 +8,9 @@
 
 | Area                       | Highlights                                                                                                                        |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Model Hub**              | Upload Revit (and other AEC) models via Autodesk ACC/BIM 360; every *Project → Option → Version* is tracked automatically. |
-| **3‑D Viewer**             | Interactive Autodesk Viewer embedded in React; inspect elements, filter by material, isolate layers.                               |
-| **Quantity Take‑Off**      | Back‑end service extracts element area/volume, thickness and material from Autodesk model data in real time.                          |
+| **Model Hub**              | Browse Revit (and other AEC) models via Autodesk ACC/BIM 360; every *Project → Option → Version* is tracked automatically using **free Data Management APIs**. |
+| **3‑D Viewer**             | Interactive Autodesk Viewer embedded in React using **free Viewer SDK**; inspect elements, filter by material, isolate layers.                               |
+| **Quantity Take‑Off** ✅   | Back‑end service extracts element area/volume, thickness and material from Autodesk model data using **free AEC Data Model API**.                          |
 | **Embodied Carbon Engine** | Integrates ICE, EC3, 2050 Materials and Climatiq APIs to compute tCO₂e per element and per life‑cycle stage (EN 15978 A1–A5).     |
 | **Option Comparison**      | Side‑by‑side tables, radar charts and deltas between design options & model versions.                                             |
 | **Shareable Dashboard**    | Client‑facing dashboard with read‑only token; each chart downloadable as optimised SVG.                                           |
@@ -47,6 +47,54 @@ carboncanvas-fe/
 
 ---
 
+## 🔍  Autodesk APS API Usage & Costs
+
+This application uses **only free** Autodesk APS (Platform Services) APIs - no usage charges are incurred:
+
+### ✅ **Free APIs Used (No Additional Cost)**
+These APIs are available at no additional cost with an Autodesk Developer account:
+
+- **Authentication API** - OAuth 2.0 user authentication and token management
+- **Data Management API** - Browse BIM 360/ACC hubs, projects, folders, and file versions  
+- **Viewer SDK** - Interactive 3D model visualization in the browser
+- **BIM 360 APIs** - Access to BIM 360 project data and file management
+- **Autodesk Construction Cloud APIs** - Access to ACC project data (where available)
+- **AEC Data Model API** - GraphQL queries for design entities, properties, and quantity takeoff
+
+**Note:** The following free APIs from your list are **not currently used** in this application:
+- Autodesk Forma API
+- BuildingConnected API
+- Data Exchange API
+- Data Visualization SDK
+- Manufacturing Data Model API
+- Parameters API
+- Premium Reporting API
+- Tandem Data API
+- Token Flex API
+- Vault Data APIs
+- Webhooks (free tier)
+
+### 🚫 **No Premium APIs Used**
+This application has been updated to use **only free APIs** - no usage charges are incurred for:
+- ✅ **Quantity Takeoff** - Now uses free AEC Data Model API instead of premium Model Derivative API
+- ✅ **Model Visualization** - Uses free Viewer SDK
+- ✅ **File Browsing** - Uses free Data Management APIs
+
+### 💰 **Zero Cost Operation**
+- **No usage charges** - All features use free APIs only
+- **No model translation costs** - Direct access to design data via AEC Data Model API
+- **No property extraction charges** - Efficient GraphQL queries instead of bulk API calls
+- **No webhook charges** - Optional features can be enabled without cost concerns
+
+### 🛡️ **Benefits of Free API Implementation**
+1. **Predictable costs** - Only require Autodesk Developer account (free)
+2. **Better performance** - GraphQL queries are more efficient than REST pagination
+3. **No rate limiting concerns** - Free APIs have generous limits
+4. **Scalable architecture** - No cost constraints on usage volume
+5. **Future-proof** - Built on Autodesk's recommended AEC Data Model patterns
+
+---
+
 ## ⚡  Quick Start
 
 ```bash
@@ -59,6 +107,8 @@ $ npm run dev                  # http://localhost:3000
 ```
 
 > **Prerequisites:** Node ≥ 20, npm ≥ 10.  For model viewing you'll also need Autodesk APS credentials and access to BIM 360/ACC.
+
+> ✅ **Cost-Free Operation:** This application uses only free Autodesk APIs - no usage charges are incurred for any features including quantity takeoff and model visualization.
 
 ---
 
