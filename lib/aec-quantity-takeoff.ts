@@ -57,22 +57,41 @@ export class AECQuantityTakeoffService {
     projectId: string
   ): Promise<AECQuantityTakeoffResult> {
     console.log('🔍 Starting FREE AEC Data Model quantity takeoff for design:', designId);
+    console.log('📝 Input parameters:', { designId, projectId });
     
     try {
       // 1. Get all design entities using the free AEC Data Model API
+      console.log('🚀 Step 1: Getting design entities from AEC Data Model...');
       const { elements, total } = await this.getAllDesignEntities(designId);
-      console.log(`📊 Retrieved ${elements.length} elements from AEC Data Model`);
+      console.log(`📊 Retrieved ${elements.length} elements from AEC Data Model (total: ${total})`);
+      console.log('📊 Sample elements:', elements.slice(0, 3).map(e => ({ id: e.id, name: e.name, category: e.category })));
       
       // 2. Process elements into material quantities
+      console.log('🚀 Step 2: Processing material quantities...');
       const materialQuantities = this.processMaterialQuantities(elements);
       console.log(`📏 Processed ${materialQuantities.length} unique materials`);
+      console.log('📏 Sample materials:', materialQuantities.slice(0, 3).map(m => ({ 
+        materialName: m.materialName, 
+        elementCategory: m.elementCategory, 
+        volume: m.volume,
+        elementCount: m.elementCount 
+      })));
       
       // 3. Generate element types
+      console.log('🚀 Step 3: Generating element types...');
       const elementTypes = this.generateElementTypes(elements, materialQuantities);
       console.log(`🏗️ Generated ${elementTypes.length} element types`);
+      console.log('🏗️ Sample element types:', elementTypes.slice(0, 3).map(t => ({ 
+        name: t.name, 
+        category: t.category, 
+        elementCount: t.elementCount,
+        volume: t.volume 
+      })));
       
       // 4. Calculate summary
+      console.log('🚀 Step 4: Calculating summary...');
       const summary = this.calculateSummary(materialQuantities, elementTypes);
+      console.log('📊 Summary calculated:', summary);
       
       const result: AECQuantityTakeoffResult = {
         designId,
@@ -85,10 +104,36 @@ export class AECQuantityTakeoffService {
       };
       
       console.log('✅ FREE AEC Data Model quantity takeoff completed successfully');
+      console.log('📊 Final result summary:', {
+        designId: result.designId,
+        totalElements: result.totalElements,
+        materialsCount: result.materials.length,
+        elementTypesCount: result.elementTypes.length,
+        totalVolume: result.summary.totalVolume,
+        totalArea: result.summary.totalArea
+      });
+      
       return result;
       
     } catch (error) {
       console.error('❌ AEC quantity takeoff failed:', error);
+      
+      // Enhanced error logging
+      if (error instanceof Error) {
+        console.error('📝 Detailed Error Information:');
+        console.error('  - Error Name:', error.name);
+        console.error('  - Error Message:', error.message);
+        console.error('  - Error Stack:', error.stack);
+        console.error('  - Error Cause:', error.cause);
+      } else {
+        console.error('📝 Non-Error object thrown:', typeof error, error);
+      }
+      
+      console.error('📝 Context Information:');
+      console.error('  - Design ID:', designId);
+      console.error('  - Project ID:', projectId);
+      console.error('  - Timestamp:', new Date().toISOString());
+      
       throw new Error(`AEC quantity takeoff failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -97,32 +142,62 @@ export class AECQuantityTakeoffService {
    * Get all design entities with pagination using FREE API
    */
   private async getAllDesignEntities(designId: string): Promise<{ elements: AECElement[]; total: number }> {
+    console.log('🔍 getAllDesignEntities called with designId:', designId);
+    
     const allElements: AECElement[] = [];
     let offset = 0;
     const batchSize = 1000; // AEC Data Model supports large batches efficiently
     let hasMore = true;
+    let batchCount = 0;
     
-    while (hasMore) {
-      console.log(`📊 Fetching entities batch: offset=${offset}, limit=${batchSize}`);
+    try {
+      while (hasMore) {
+        batchCount++;
+        console.log(`📊 Fetching entities batch ${batchCount}: offset=${offset}, limit=${batchSize}`);
+        
+        const result = await aecDataModelService.getDesignEntities(
+          designId,
+          undefined, // No filter - get all elements
+          batchSize,
+          offset
+        );
+        
+        console.log(`📊 Batch ${batchCount} result:`, {
+          elementsReceived: result.elements.length,
+          hasMore: result.hasMore,
+          total: result.total,
+          sampleElements: result.elements.slice(0, 2).map(e => ({ id: e.id, name: e.name, category: e.category }))
+        });
+        
+        allElements.push(...result.elements);
+        hasMore = result.hasMore;
+        offset += batchSize;
+        
+        // Safety check to prevent infinite loops
+        if (result.elements.length === 0) {
+          console.log('📊 No more elements received, breaking loop');
+          break;
+        }
+        
+        // Prevent excessive API calls
+        if (batchCount > 10) {
+          console.warn('⚠️ Reached maximum batch limit (10), stopping pagination');
+          break;
+        }
+      }
       
-      const result = await aecDataModelService.getDesignEntities(
-        designId,
-        undefined, // No filter - get all elements
-        batchSize,
-        offset
-      );
+      console.log(`✅ getAllDesignEntities completed: ${allElements.length} total elements from ${batchCount} batches`);
       
-      allElements.push(...result.elements);
-      hasMore = result.hasMore;
-      offset += batchSize;
+      return {
+        elements: allElements,
+        total: allElements.length
+      };
       
-      if (result.elements.length === 0) break;
+    } catch (error) {
+      console.error('❌ getAllDesignEntities failed:', error);
+      console.error('📝 Context:', { designId, currentOffset: offset, batchCount, elementsCollected: allElements.length });
+      throw error;
     }
-    
-    return {
-      elements: allElements,
-      total: allElements.length
-    };
   }
   
   /**

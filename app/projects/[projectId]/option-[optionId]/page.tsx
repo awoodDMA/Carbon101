@@ -10,6 +10,7 @@ import ModelPickerPopup from '@/components/ModelPickerPopup';
 import SimpleAutodeskViewer from '@/components/SimpleAutodeskViewer';
 import EmbodiedCarbonChart from '@/components/EmbodiedCarbonChart';
 import QuantityTakeoffResults from '@/components/QuantityTakeoffResults';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import { getProjectById, getOptionByProjectAndLetter, getOptionsByProjectId, updateOptionLinkedModel, reloadDataFromStorage, type APSModelAssignment } from '@/lib/relational-data';
 import { QuantityTakeoffResult } from '@/lib/quantity-takeoff';
 
@@ -72,6 +73,7 @@ function OptionPageContent({ params }: OptionPageProps) {
   const [linkedModel, setLinkedModel] = useState<APSModelAssignment | undefined>(currentOption.linkedModel);
   const [isLinking, setIsLinking] = useState(false);
   const [accessToken, setAccessToken] = useState<string>('');
+  const [isUnlinkConfirmOpen, setIsUnlinkConfirmOpen] = useState(false);
   // Fixed viewer height to match the viewer component's internal constraints
   const VIEWER_HEIGHT = '500px'; // Fixed height to match viewer constraints
 
@@ -230,6 +232,30 @@ function OptionPageContent({ params }: OptionPageProps) {
     }
   };
 
+  const handleUnlinkModel = () => {
+    try {
+      console.log('🔗 Unlinking model from option:', { projectId, optionLetter });
+      
+      // Update the linked model to null/undefined
+      const success = updateOptionLinkedModel(projectId, optionLetter, null);
+      
+      if (!success) {
+        throw new Error('Failed to unlink model from option');
+      }
+      
+      // Update local state
+      setLinkedModel(undefined);
+      
+      // Close confirmation modal
+      setIsUnlinkConfirmOpen(false);
+      
+      console.log('✅ Model unlinked successfully');
+      
+    } catch (error) {
+      console.error('Failed to unlink model:', error);
+      alert(`Failed to unlink model: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -341,16 +367,17 @@ function OptionPageContent({ params }: OptionPageProps) {
             <div className="flex items-center gap-3">
               {/* Dynamic Model Link Button */}
               {linkedModel && linkedModel.status === 'ready' ? (
-                <div
+                <button
+                  onClick={() => setIsUnlinkConfirmOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors hover:bg-gray-50"
                   style={{ backgroundColor: 'white', color: '#374151', border: '1px solid #d1d5db' }}
-                  title={linkedModel.name}
+                  title={`${linkedModel.name} - Click to unlink`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   <span>Model Linked</span>
-                </div>
+                </button>
               ) : (
                 <button
                   onClick={() => setIsModelBrowserOpen(true)}
@@ -416,6 +443,18 @@ function OptionPageContent({ params }: OptionPageProps) {
         onClose={() => setIsModelBrowserOpen(false)}
         onModelSelect={handleModelSelect}
         isLinking={isLinking}
+      />
+      
+      {/* Confirmation Modal for Unlinking */}
+      <ConfirmationModal
+        isOpen={isUnlinkConfirmOpen}
+        onClose={() => setIsUnlinkConfirmOpen(false)}
+        onConfirm={handleUnlinkModel}
+        title="Unlink Model"
+        message={`Are you sure you want to unlink "${linkedModel?.name}" from this option? This action cannot be undone.`}
+        confirmText="Unlink"
+        cancelText="Cancel"
+        isDestructive={true}
       />
     </div>
   );

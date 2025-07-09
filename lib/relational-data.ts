@@ -360,15 +360,15 @@ export const getAllProjects = (): Project[] => {
 };
 
 // Update functions for modifying data
-export const updateOptionLinkedModel = (projectId: string, optionLetter: string, linkedModel: APSModelAssignment): boolean => {
+export const updateOptionLinkedModel = (projectId: string, optionLetter: string, linkedModel: APSModelAssignment | null | undefined): boolean => {
   console.log('🔧 updateOptionLinkedModel called:', { 
     projectId, 
     optionLetter, 
-    linkedModel: {
+    linkedModel: linkedModel ? {
       name: linkedModel.name,
       status: linkedModel.status,
       viewerUrn: linkedModel.viewerUrn
-    }
+    } : null
   });
   
   console.log('🔧 Current designOptions array length:', designOptions.length);
@@ -397,7 +397,7 @@ export const updateOptionLinkedModel = (projectId: string, optionLetter: string,
   
   designOptions[optionIndex] = {
     ...designOptions[optionIndex],
-    linkedModel,
+    linkedModel: linkedModel || undefined,
     metadata: {
       ...designOptions[optionIndex].metadata,
       lastModified: new Date().toISOString(),

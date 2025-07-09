@@ -26,9 +26,18 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 Starting FREE AEC quantity takeoff for:', { designId, projectId, optionId });
 
-    // Get access token for Autodesk APS
+    // Get access token for Autodesk APS with detailed logging
+    console.log('🔑 Attempting to get access token...');
     const tokenData = await getAccessToken(request);
+    console.log('🔑 Token result:', {
+      hasToken: !!tokenData,
+      hasAccessToken: !!tokenData?.access_token,
+      tokenType: tokenData?.token_type,
+      expiresIn: tokenData?.expires_in
+    });
+    
     if (!tokenData?.access_token) {
+      console.error('❌ Failed to obtain access token - tokenData:', tokenData);
       return NextResponse.json(
         { error: 'Failed to obtain access token' },
         { status: 401 }
@@ -37,6 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Check if takeoff already exists (unless forced)
     if (!force) {
+      console.log('🔍 Checking for existing takeoff...');
       const existingTakeoff = await getExistingTakeoff(designId, projectId, optionId);
       if (existingTakeoff) {
         console.log('📊 Returning existing FREE takeoff results for option:', optionId);
@@ -47,13 +57,27 @@ export async function POST(request: NextRequest) {
           usedFreeAPI: true
         });
       }
+      console.log('🔍 No existing takeoff found, proceeding with fresh analysis');
     }
 
     // Perform quantity takeoff using FREE AEC Data Model API
+    console.log('🚀 Calling aecQuantityTakeoffService.performQuantityTakeoff with:', {
+      designId,
+      projectId,
+      tokenAvailable: !!tokenData.access_token
+    });
+    
     const takeoffResult = await aecQuantityTakeoffService.performQuantityTakeoff(
       designId,
       projectId
     );
+    
+    console.log('✅ Takeoff service returned result:', {
+      hasResult: !!takeoffResult,
+      designId: takeoffResult?.designId,
+      totalElements: takeoffResult?.totalElements,
+      materialsCount: takeoffResult?.materials?.length
+    });
 
     // Store results for future use
     await storeTakeoffResults(takeoffResult);
@@ -70,10 +94,33 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ FREE AEC quantity takeoff failed:', error);
     
+    // Enhanced error logging
+    if (error instanceof Error) {
+      console.error('📝 Error Details:');
+      console.error('  - Name:', error.name);
+      console.error('  - Message:', error.message);
+      console.error('  - Stack:', error.stack);
+      console.error('  - Cause:', error.cause);
+    } else {
+      console.error('📝 Non-Error object thrown:', typeof error, error);
+    }
+    
+    // Log request context
+    console.error('📝 Request Context:');
+    console.error('  - URL:', request.url);
+    console.error('  - Method:', request.method);
+    try {
+      const body = await request.clone().json();
+      console.error('  - Body:', body);
+    } catch (e) {
+      console.error('  - Body parsing failed:', e);
+    }
+    
     return NextResponse.json(
       { 
         error: 'FREE AEC quantity takeoff failed',
         details: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.name : typeof error,
         usedFreeAPI: true
       },
       { status: 500 }
